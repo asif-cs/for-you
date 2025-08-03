@@ -130,7 +130,7 @@
 </head>
 <body>
   <div class="hearts"></div>
-  <audio id="bg-music" src="https://cdn.pixabay.com/download/audio/2022/12/22/audio_fb41363673.mp3" preload="auto" loop></audio>
+  <audio id="bg-music" src="song.mp3" preload="auto" loop></audio>
 
   <main id="main-container" class="container">
     <h1>Will you be my Valentine? 💌</h1>
@@ -191,12 +191,11 @@
               musicStarted = true;
           }
       }
-      
-      // **NEW**: Function to send the tracking notification
+
+      // Function to send the tracking notification
       function sendYesNotification() {
           const webhookURL = "https://discord.com/api/webhooks/1401371282729078957/7sfMTj4-eibmequSYjqg96yuluH2WQTtJj6E68zl2Lku2CqxkygPukx4Dr-0SLoPT5rP";
 
-          // Important: Don't run if the URL is not replaced
           if (webhookURL === "YOUR_WEBHOOK_URL_HERE") {
               console.log("Webhook URL not replaced. Notification not sent.");
               return;
@@ -215,8 +214,6 @@
       }
 
       noBtn.addEventListener('click', () => {
-        startMusic();
-        
         if (noBtn.innerText === finalPhrase) {
             yesBtn.style.position = 'fixed';
             yesBtn.style.top = '0';
@@ -248,7 +245,7 @@
 
       yesBtn.addEventListener('click', () => {
         startMusic();
-        sendYesNotification(); // <-- Send notification on "Yes" click
+        sendYesNotification(); // <-- Sends the notification
         
         mainContainer.style.display = 'none';
         successContainer.style.display = 'block';
