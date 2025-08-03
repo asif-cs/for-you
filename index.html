@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Will You Be My Valentine?</title>
+  <style>
+    :root {
+      --bg-color: #fff0f5; /* Lavender Blush */
+      --text-color: #333;
+      --yes-btn-bg: #4CAF50; /* Green for Yes */
+      --no-btn-bg: #f44336;  /* Red for No */
+      --success-color: #d90429;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--bg-color);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 1rem;
+      overflow: hidden;
+      position: relative;
+    }
+
+    main, section {
+      z-index: 10;
+      text-align: center;
+      max-width: 500px;
+      width: 100%;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 6vw, 3.2rem);
+      margin-bottom: 1.5rem;
+      color: var(--text-color);
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .main-img {
+      width: 240px;
+      height: auto;
+      margin-bottom: 2rem;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+
+    .buttons {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      height: 60px;
+    }
+
+    .btn {
+      padding: 0.9rem 1.8rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .btn:hover {
+      transform: translateY(-3px) scale(1.05);
+      box-shadow: 0 8px 12px rgba(0,0,0,0.15);
+    }
+
+    .btn:focus-visible {
+        outline: 3px solid var(--yes-btn-bg);
+        outline-offset: 2px;
+    }
+
+    #yes-btn { background-color: var(--yes-btn-bg); }
+    #no-btn { background-color: var(--no-btn-bg); }
+
+    #success-container {
+      display: none;
+      animation: fadeInUp 0.8s ease-out;
+    }
+
+    #success-container h1 { color: var(--success-color); }
+    
+    .sticker-container {
+        position: relative;
+        height: 300px;
+        margin-top: 2rem;
+    }
+
+    .sticker-container img {
+      width: 300px;
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      transition: opacity 0.7s ease-in-out;
+    }
+
+    .hearts {
+        position: absolute; top: 0; left: 0;
+        width: 100%; height: 100%;
+        pointer-events: none; overflow: hidden; z-index: 1;
+    }
+
+    .heart {
+        position: absolute;
+        width: 20px; height: 20px;
+        background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23ff8fab"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>');
+        background-size: contain;
+        bottom: -20px;
+        animation: fly 10s linear infinite;
+        opacity: 0;
+    }
+
+    @keyframes fly {
+        0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+        100% { transform: translateY(-120vh) rotate(720deg); opacity: 0; }
+    }
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(30px) scale(0.95); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+  </style>
+</head>
+<body>
+  <div class="hearts"></div>
+  <audio id="bg-music" src="https://cdn.pixabay.com/download/audio/2022/12/22/audio_fb41363673.mp3" preload="auto" loop></audio>
+
+  <main id="main-container" class="container">
+    <h1>Will you be my Valentine? 💌</h1>
+    <img class="main-img" src="https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExeGptbzE3M3FtaGhiZm1oZ2J5bW5yYXB5bTk5ZXduenlxMmp2aDV1ZiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/FWFdXMXtcxdF8ulCEw/giphy.gif" alt="Cute character with hearts" loading="lazy"/>
+    <div class="buttons">
+      <button class="btn" id="yes-btn" aria-label="Say Yes to Valentine Proposal">Yes</button>
+      <button class="btn" id="no-btn" aria-label="Say No to Valentine Proposal">No</button>
+    </div>
+  </main>
+
+  <section id="success-container" class="container">
+    <h1>Knew you’d say yes! 🥰</h1>
+    <div class="sticker-container">
+        <img id="intermediate-sticker" src="https://media.giphy.com/media/v1.Y2lkPWVjZjA1ZTQ3MXJqdDFrajRrcnd6Z2J6NmlpNzd5cThtcTZrb3MzM3lrdWRzbjc4eiZlcD12MV9zdGlja2Vyc19yZWxhdGVkJmN0PXM/rGKqOP5OGJ6PFi7A0g/giphy.gif" alt="Cute character celebrating" loading="lazy"/>
+        <img id="final-sticker" src="https://media.giphy.com/media/v1.Y2lkPWVjZjA1ZTQ3ajVyZTA5OHBkZWc3bWc5NWNrODNhZTQ5NHFnMGVsY21ha2F0cjhsNCZlcD12MV9zdGlja2Vyc19yZWxhdGVkJmN0PXM/6ZVD3dtQ84gdrDFWnu/giphy.gif" alt="Cute characters hugging" loading="lazy" style="opacity: 0;"/>
+    </div>
+  </section>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const mainContainer = document.getElementById('main-container');
+      const successContainer = document.getElementById('success-container');
+      const noBtn = document.getElementById('no-btn');
+      const yesBtn = document.getElementById('yes-btn');
+      const heartsContainer = document.querySelector('.hearts');
+      const music = document.getElementById('bg-music');
+
+      const noButtonPhrases = [
+        "Are you sure?", "Think twice...", "Pretty please?", "My heart's breaking 😭",
+        "Don't do this to me!", "I'm begging you!", "Last chance!", "Fine, I give up... 😔",
+        "Just kidding, please say YES! 💘"
+      ];
+      const finalPhrase = noButtonPhrases[noButtonPhrases.length - 1];
+      let phraseIndex = 0;
+      let isNoButtonRunning = false;
+      let musicStarted = false;
+      
+      let heartInterval;
+      function createHeart() {
+          const heart = document.createElement('div');
+          heart.classList.add('heart');
+          heart.style.left = `${Math.random() * 100}vw`;
+          heart.style.animationDuration = `${Math.random() * 5 + 5}s`;
+          heart.style.animationDelay = `${Math.random() * 3}s`;
+          heartsContainer.appendChild(heart);
+          setTimeout(() => heart.remove(), 10000);
+      }
+      function toggleHearts(active) {
+        clearInterval(heartInterval);
+        if (active) { heartInterval = setInterval(createHeart, 300); }
+      }
+      document.addEventListener('visibilitychange', () => toggleHearts(!document.hidden));
+      toggleHearts(true);
+
+      function startMusic() {
+          if (!musicStarted) {
+              music.play().catch(e => console.error("Audio playback failed:", e));
+              musicStarted = true;
+          }
+      }
+      
+      // **NEW**: Function to send the tracking notification
+      function sendYesNotification() {
+          const webhookURL = "https://discord.com/api/webhooks/1401371282729078957/7sfMTj4-eibmequSYjqg96yuluH2WQTtJj6E68zl2Lku2CqxkygPukx4Dr-0SLoPT5rP";
+
+          // Important: Don't run if the URL is not replaced
+          if (webhookURL === "YOUR_WEBHOOK_URL_HERE") {
+              console.log("Webhook URL not replaced. Notification not sent.");
+              return;
+          }
+
+          const data = {
+              content: "Someone said YES! to your Valentine's proposal! ❤️🎉",
+              username: "Valentine Notifier"
+          };
+
+          fetch(webhookURL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(data)
+          }).catch(error => console.error('Error sending notification:', error));
+      }
+
+      noBtn.addEventListener('click', () => {
+        startMusic();
+        
+        if (noBtn.innerText === finalPhrase) {
+            yesBtn.style.position = 'fixed';
+            yesBtn.style.top = '0';
+            yesBtn.style.left = '0';
+            yesBtn.style.width = '100vw';
+            yesBtn.style.height = '100vh';
+            yesBtn.style.borderRadius = '0';
+            yesBtn.style.fontSize = 'clamp(3rem, 15vw, 8rem)';
+            yesBtn.style.zIndex = '100';
+            noBtn.remove();
+            return;
+        }
+
+        if (phraseIndex < noButtonPhrases.length) {
+            if (!isNoButtonRunning) {
+                noBtn.style.position = 'absolute';
+                isNoButtonRunning = true;
+            }
+            noBtn.innerText = noButtonPhrases[phraseIndex];
+            const x = Math.random() * (window.innerWidth - noBtn.offsetWidth);
+            const y = Math.random() * (window.innerHeight - noBtn.offsetHeight);
+            noBtn.style.left = `${x}px`;
+            noBtn.style.top = `${y}px`;
+            const scale = 1 + (phraseIndex + 1) * 0.4;
+            yesBtn.style.transform = `scale(${scale})`;
+            phraseIndex++;
+        }
+      });
+
+      yesBtn.addEventListener('click', () => {
+        startMusic();
+        sendYesNotification(); // <-- Send notification on "Yes" click
+        
+        mainContainer.style.display = 'none';
+        successContainer.style.display = 'block';
+
+        setTimeout(() => {
+            document.getElementById('intermediate-sticker').style.opacity = '0';
+            document.getElementById('final-sticker').style.opacity = '1';
+        }, 1400);
+      });
+    });
+  </script>
+</body>
+</html>
