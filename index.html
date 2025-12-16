@@ -281,12 +281,11 @@
             welcomeScreen.style.display = 'block';
             welcomeScreen.style.animation = 'fadeInUp 0.8s ease-out';
             
-            // --- NEW: NOTIFY DISCORD ON PAGE LOAD ---
-            // This tells you immediately when they click the link
+            // --- UPDATED: PAGE LOAD NOTIFICATION ---
             fetch('/api/send-love', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ content: "👀 Someone just opened the Valentine link!" }) 
+              body: JSON.stringify({ content: "👉🏻 Someone just opened the Valentine link!" }) 
             }).catch(() => {});
             
         }, 500);
@@ -309,11 +308,11 @@
           // B: Personalize the Question
           questionText.innerHTML = `${visitorName}, will you be my Valentine? 💌`;
           
-          // C: Notify "Started Game"
+          // --- UPDATED: NAME ENTRY NOTIFICATION ---
           fetch('/api/send-love', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ content: `🎮 ${visitorName} just entered their name!` }) 
+            body: JSON.stringify({ content: `👀 ${visitorName} just entered their name!` }) 
           }).catch(() => {});
 
           // D: Smooth Transition
@@ -376,7 +375,7 @@
 
       // --- 5. Yes Button Logic (Final Success) ---
       yesBtn.addEventListener('click', async () => {
-        // Send the FINAL confirmation to Discord
+        // --- UPDATED: SUCCESS NOTIFICATION ---
         const message = `${visitorName} said YES! ❤️`;
 
         fetch('/api/send-love', {
