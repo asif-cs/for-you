@@ -11,6 +11,7 @@
       --yes-btn-bg: #4CAF50;
       --no-btn-bg: #f44336;
       --success-color: #d90429;
+      --input-border: #ff8fab;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -23,7 +24,7 @@
       align-items: center;
       min-height: 100vh;
       padding: 1rem;
-      overflow: hidden; /* Prevents scrollbars when button moves */
+      overflow: hidden;
       position: relative;
     }
 
@@ -42,29 +43,70 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
+    /* Containers */
     main, section { 
         z-index: 10; text-align: center; 
         max-width: 90%; width: 500px; 
     }
     
-    #main-container { display: none; }
+    #start-screen { display: none; } /* Shown after preloader */
+    #main-container { display: none; } /* Shown after start */
+    #success-container { display: none; animation: fadeInUp 0.8s ease-out; }
 
+    /* Typography */
     h1 {
-      font-size: clamp(1.5rem, 6vw, 2.5rem); /* Responsive font */
+      font-size: clamp(1.5rem, 6vw, 2.5rem);
       margin-bottom: 1.5rem; color: var(--text-color);
       text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
       line-height: 1.2;
     }
+    
+    h2 { font-size: 1.2rem; margin-bottom: 1rem; color: #555; }
 
+    /* Images */
     .main-img {
-      width: clamp(200px, 60vw, 280px); /* Responsive image */
+      width: clamp(200px, 60vw, 280px);
       height: auto; margin-bottom: 2rem;
       user-select: none; -webkit-user-drag: none;
     }
 
+    /* Inputs & Start Button */
+    .input-group { margin-bottom: 1.5rem; }
+    
+    input[type="text"] {
+        padding: 12px 20px;
+        font-size: 1.1rem;
+        border: 2px solid var(--input-border);
+        border-radius: 25px;
+        outline: none;
+        width: 80%;
+        max-width: 300px;
+        text-align: center;
+        transition: border-color 0.3s, box-shadow 0.3s;
+    }
+    input[type="text"]:focus {
+        border-color: var(--success-color);
+        box-shadow: 0 0 10px rgba(217, 4, 41, 0.2);
+    }
+
+    .start-btn {
+        background-color: #ff4757;
+        color: white;
+        padding: 15px 40px;
+        font-size: 1.3rem;
+        font-weight: bold;
+        border: none;
+        border-radius: 50px;
+        cursor: pointer;
+        box-shadow: 0 4px 15px rgba(255, 71, 87, 0.4);
+        transition: transform 0.2s;
+    }
+    .start-btn:hover { transform: scale(1.05); }
+
+    /* Yes/No Buttons */
     .buttons { 
         display: flex; justify-content: center; gap: 15px; 
-        flex-wrap: wrap; /* Allows wrapping on very small screens */
+        flex-wrap: wrap; 
     }
 
     .btn {
@@ -73,22 +115,19 @@
       transition: transform 0.2s, box-shadow 0.2s;
       box-shadow: 0 4px 6px rgba(0,0,0,0.1);
       min-width: 100px;
-      -webkit-tap-highlight-color: transparent; /* Removes blue highlight on mobile */
+      -webkit-tap-highlight-color: transparent;
     }
     .btn:active { transform: scale(0.95); }
     
     #yes-btn { 
         background-color: var(--yes-btn-bg); 
-        /* Ensure Yes button is always on top as it grows */
         z-index: 20; 
         transition: transform 0.3s ease;
     }
     #no-btn { background-color: var(--no-btn-bg); position: relative; }
 
-    /* Success Screen */
-    #success-container { display: none; animation: fadeInUp 0.8s ease-out; }
+    /* Success Stickers */
     #success-container h1 { color: var(--success-color); }
-    
     .sticker-container { position: relative; height: 300px; margin-top: 2rem; }
     .sticker-container img {
       width: clamp(250px, 80vw, 350px); 
@@ -134,6 +173,15 @@
   
   <audio id="bg-music" src="media/audio/song.mp3" preload="auto" loop></audio>
 
+  <section id="start-screen">
+      <h1>New Game 🎮</h1>
+      <h2>Enter Player Name:</h2>
+      <div class="input-group">
+          <input type="text" id="player-name" placeholder="Your Name" autocomplete="off" />
+      </div>
+      <button class="start-btn" id="start-game-btn">PRESS START</button>
+  </section>
+
   <main id="main-container">
     <h1>Will you be my Valentine? 💌</h1>
     <img class="main-img" src="media/gifs/main.gif" alt="Please?" />
@@ -155,34 +203,62 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
+      // Elements
       const preloader = document.getElementById('preloader');
+      const startScreen = document.getElementById('start-screen');
       const mainContainer = document.getElementById('main-container');
       const successContainer = document.getElementById('success-container');
+      
+      const nameInput = document.getElementById('player-name');
+      const startBtn = document.getElementById('start-game-btn');
+      
       const noBtn = document.getElementById('no-btn');
       const yesBtn = document.getElementById('yes-btn');
       const music = document.getElementById('bg-music');
       const heartsContainer = document.querySelector('.hearts');
       const toast = document.getElementById('toast');
 
-      // --- 1. Preload Images & Assets ---
-      // This ensures stickers don't "pop in" later if internet is slow
+      let playerName = "Anonymous"; // Default if something goes wrong
+
+      // --- 1. Preload Images ---
       const imagesToPreload = ["media/gifs/sticker2.gif", "media/gifs/sticker3.gif", "media/gifs/final.gif"];
       imagesToPreload.forEach(src => {
           const img = new Image();
           img.src = src;
       });
 
-      // --- 2. Remove Preloader when page is ready ---
+      // --- 2. Initial Load ---
       window.addEventListener('load', () => {
         preloader.style.opacity = '0';
         setTimeout(() => {
             preloader.style.display = 'none';
-            mainContainer.style.display = 'block';
-            mainContainer.style.animation = 'fadeInUp 0.8s ease-out';
+            // Show Start Screen first!
+            startScreen.style.display = 'block';
+            startScreen.style.animation = 'fadeInUp 0.8s ease-out';
         }, 500);
       });
 
-      // --- 3. Background Hearts Animation ---
+      // --- 3. Start Game Logic (Captures Name & Starts Music) ---
+      startBtn.addEventListener('click', () => {
+          const val = nameInput.value.trim();
+          
+          if (!val) {
+              alert("Please enter a name to start the game! 👾");
+              return;
+          }
+          
+          playerName = val; // Save the name for later
+          
+          // Play Music (User interaction allows this now!)
+          music.play().catch(e => console.log("Audio error:", e));
+          
+          // Switch Screens
+          startScreen.style.display = 'none';
+          mainContainer.style.display = 'block';
+          mainContainer.style.animation = 'fadeInUp 0.8s ease-out';
+      });
+
+      // --- 4. Background Hearts ---
       function createHeart() {
           const heart = document.createElement('div');
           heart.classList.add('heart');
@@ -193,13 +269,13 @@
       }
       setInterval(createHeart, 300);
 
-      // --- 4. Toast Helper ---
+      // --- 5. Toast Helper ---
       function showToast() {
         toast.className = "show";
         setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
       }
 
-      // --- 5. "No" Button Logic ---
+      // --- 6. "No" Button Logic ---
       const noPhrases = [
         "Are you sure?", "Really sure?", "Think again!", "Last chance!", 
         "Surely not?", "You might regret this!", "Give it another thought!", 
@@ -211,55 +287,37 @@
       let phraseIndex = 0;
       
       noBtn.addEventListener('click', () => {
-         // Update text
          noBtn.innerText = noPhrases[phraseIndex % noPhrases.length];
          phraseIndex++;
-         
-         // Move button
          moveNoButton();
-         
-         // Make Yes button grow aggressively
          const currentScale = parseFloat(yesBtn.style.transform.replace('scale(', '')) || 1;
          yesBtn.style.transform = `scale(${currentScale + 0.5})`;
       });
 
       function moveNoButton() {
-        // Calculate safe area (viewport - button size - padding)
         const padding = 20;
         const btnWidth = noBtn.offsetWidth;
         const btnHeight = noBtn.offsetHeight;
-        
         const maxX = window.innerWidth - btnWidth - padding;
         const maxY = window.innerHeight - btnHeight - padding;
-        
         const x = Math.max(padding, Math.random() * maxX);
         const y = Math.max(padding, Math.random() * maxY);
-        
         noBtn.style.position = 'fixed'; 
-        noBtn.style.left = `${x}px`;
+        noBtn.style.left = `${x}px`; 
         noBtn.style.top = `${y}px`;
         noBtn.style.zIndex = '100'; 
       }
 
-      // --- 6. "Yes" Button Logic (Synced & Secure) ---
+      // --- 7. "Yes" Button Logic (Sends Name to Discord) ---
       yesBtn.addEventListener('click', async () => {
-        // A. Show Loader (Buffering State)
-        preloader.style.display = 'flex';
-        preloader.style.opacity = '1';
+        // Prepare the message using the captured name
+        const message = `${playerName} said YES! ❤️`;
 
-        // B. Attempt to Play Music & Wait for it
-        try {
-            await music.play();
-        } catch (err) {
-            console.warn("Music autoplay blocked or failed:", err);
-            // We continue anyway so the user isn't stuck
-        }
-
-        // C. Send Secure Notification (Using Internal API)
-        // This now points to your own Vercel backend
+        // Send to Vercel API
         fetch('/api/send-love', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content: message }) // Sending the dynamic name
         })
         .then(res => {
             if(res.ok) showToast();
@@ -267,17 +325,13 @@
         })
         .catch(e => console.error("Error:", e));
 
-        // D. Hide Loader & Start Visuals (Synced!)
-        preloader.style.opacity = '0';
-        setTimeout(() => { preloader.style.display = 'none'; }, 200);
-
+        // Start Animation
         mainContainer.style.display = 'none';
         successContainer.style.display = 'block';
         
         const intermediateSticker = document.getElementById('intermediate-sticker');
         const finalSticker = document.getElementById('final-sticker');
         
-        // Sequence using updated paths
         const sequence = ["media/gifs/sticker1.gif", "media/gifs/sticker2.gif", "media/gifs/sticker3.gif"];
         
         for (const src of sequence) {
