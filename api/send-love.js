@@ -1,33 +1,26 @@
 export default async function handler(req, res) {
-  // Only allow POST requests
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  // Get the secret URL from Vercel's secure Environment Variables
   const webhookUrl = process.env.DISCORD_WEBHOOK;
+  if (!webhookUrl) return res.status(500).json({ error: 'Webhook URL missing' });
 
-  if (!webhookUrl) {
-    return res.status(500).json({ error: 'Webhook URL not configured' });
-  }
+  // CAPTURE THE CONTENT SENT FROM FRONTEND
+  // If no content is sent, fallback to "Someone said YES!"
+  const message = req.body.content || "Someone said YES! ❤️";
 
   try {
-    const discordResponse = await fetch(webhookUrl, {
+    await fetch(webhookUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        content: "She said YES! ❤️",
+        content: message, // Now sending the dynamic message with the name
         username: "Valentine Bot"
       }),
     });
-
-    if (discordResponse.ok) {
-      return res.status(200).json({ success: true });
-    } else {
-      return res.status(500).json({ error: 'Discord error' });
-    }
+    return res.status(200).json({ success: true });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(500).json({ error: 'Server Error' });
   }
 }
