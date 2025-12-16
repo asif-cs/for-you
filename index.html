@@ -31,7 +31,7 @@
     /* Loading Spinner */
     #preloader {
       position: fixed; inset: 0; background-color: var(--bg-color);
-      z-index: 999; display: flex; justify-content: center; align-items: center;
+      z-index: 9999; display: flex; justify-content: center; align-items: center;
       transition: opacity 0.5s ease-out;
     }
     .loader {
@@ -43,19 +43,48 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* Containers */
+    /* Layout & Containers */
     main, section { 
         z-index: 10; text-align: center; 
         max-width: 90%; width: 500px; 
     }
     
-    #welcome-screen { display: none; } /* Shown after preloader */
-    #main-container { display: none; } /* Shown after name entry */
+    #welcome-screen { display: none; } 
+    #main-container { display: none; }
     #success-container { display: none; animation: fadeInUp 0.8s ease-out; }
+
+    /* --- THE POPPING CAT STYLES --- */
+    .card-wrapper {
+        position: relative;
+        margin-top: 50px; /* Push down slightly to make room for cat ears */
+    }
+
+    /* The Cat Image */
+    .cat-popup {
+        position: absolute;
+        top: -95px; /* Adjust this to control how much cat pops out */
+        left: 50%;
+        transform: translateX(-50%);
+        width: 140px; 
+        z-index: 0; /* Behind the card */
+        pointer-events: none; /* Let clicks pass through */
+    }
+
+    /* The White Card */
+    .welcome-card {
+        position: relative;
+        z-index: 1; /* In front of the cat */
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(10px);
+        padding: 2.5rem;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+    }
 
     /* Typography */
     h1 {
-      font-size: clamp(1.8rem, 6vw, 2.8rem);
+      font-size: clamp(1.8rem, 6vw, 2.5rem);
       margin-bottom: 0.5rem; color: var(--text-color);
       line-height: 1.2;
     }
@@ -64,16 +93,6 @@
         font-size: 1.1rem;
         color: #777;
         margin-bottom: 2rem;
-    }
-
-    /* Welcome Screen Card */
-    .welcome-card {
-        background: rgba(255, 255, 255, 0.8);
-        backdrop-filter: blur(10px);
-        padding: 2.5rem;
-        border-radius: 20px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-        border: 1px solid rgba(255, 255, 255, 0.5);
     }
 
     /* Images */
@@ -183,6 +202,9 @@
         from { opacity: 0; transform: translateY(30px) scale(0.95); }
         to { opacity: 1; transform: translateY(0) scale(1); }
     }
+    @keyframes fadeOut {
+        to { opacity: 0; transform: scale(0.95); }
+    }
   </style>
 </head>
 <body>
@@ -192,18 +214,23 @@
   <audio id="bg-music" src="media/audio/song.mp3" preload="auto" loop></audio>
 
   <section id="welcome-screen">
-      <div class="welcome-card">
-          <h1>Hello there! 💕</h1>
-          <p class="subtitle">Before we begin, what is your name?</p>
-          <div class="input-group">
-              <input type="text" id="visitor-name" placeholder="Enter your name" autocomplete="off" />
+      <div class="card-wrapper">
+          <img src="media/gifs/greeting.gif" class="cat-popup" alt="Hi!" />
+          
+          <div class="welcome-card">
+              <h1>Hello there! 💕</h1>
+              <p class="subtitle">I have a question for you...</p>
+              <div class="input-group">
+                  <input type="text" id="visitor-name" placeholder="Enter your name" autocomplete="off" />
+              </div>
+              <button class="continue-btn" id="continue-btn">Continue</button>
           </div>
-          <button class="continue-btn" id="continue-btn">Continue</button>
       </div>
   </section>
 
   <main id="main-container">
-    <h1>Will you be my Valentine? 💌</h1>
+    <h1 id="question-text">Will you be my Valentine? 💌</h1>
+    
     <img class="main-img" src="media/gifs/main.gif" alt="Please?" />
     <div class="buttons">
       <button class="btn" id="yes-btn">Yes</button>
@@ -223,7 +250,6 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // Elements
       const preloader = document.getElementById('preloader');
       const welcomeScreen = document.getElementById('welcome-screen');
       const mainContainer = document.getElementById('main-container');
@@ -231,6 +257,7 @@
       
       const nameInput = document.getElementById('visitor-name');
       const continueBtn = document.getElementById('continue-btn');
+      const questionText = document.getElementById('question-text');
       
       const noBtn = document.getElementById('no-btn');
       const yesBtn = document.getElementById('yes-btn');
@@ -238,27 +265,25 @@
       const heartsContainer = document.querySelector('.hearts');
       const toast = document.getElementById('toast');
 
-      let visitorName = "Anonymous"; 
+      let visitorName = "";
 
-      // --- 1. Preload Images ---
-      const imagesToPreload = ["media/gifs/sticker2.gif", "media/gifs/sticker3.gif", "media/gifs/final.gif"];
+      // --- 1. Preload ---
+      const imagesToPreload = ["media/gifs/sticker2.gif", "media/gifs/sticker3.gif", "media/gifs/final.gif", "media/gifs/greeting.gif"];
       imagesToPreload.forEach(src => {
           const img = new Image();
           img.src = src;
       });
 
-      // --- 2. Initial Load ---
       window.addEventListener('load', () => {
         preloader.style.opacity = '0';
         setTimeout(() => {
             preloader.style.display = 'none';
-            // Show Welcome Screen
             welcomeScreen.style.display = 'block';
             welcomeScreen.style.animation = 'fadeInUp 0.8s ease-out';
         }, 500);
       });
 
-      // --- 3. Welcome Logic (Captures Name & Starts Music) ---
+      // --- 2. Welcome Logic (Name & Personalized Message) ---
       continueBtn.addEventListener('click', () => {
           const val = nameInput.value.trim();
           
@@ -267,12 +292,24 @@
               return;
           }
           
-          visitorName = val; 
+          visitorName = val;
           
-          // Play Music immediately on interaction
+          // A: Play Music
           music.play().catch(e => console.log("Audio error:", e));
+
+          // B: Personalize the Question
+          // This makes it feel much less generic!
+          questionText.innerHTML = `${visitorName}, will you be my Valentine? 💌`;
           
-          // Smooth Transition
+          // C: Optional "Just in Case" Notification
+          // Silent ping to let you know they are viewing it
+          fetch('/api/send-love', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content: `👀 ${visitorName} just started the Valentine page!` }) 
+          }).catch(() => {}); // Ignore errors here, just a background ping
+
+          // D: Smooth Transition
           welcomeScreen.style.animation = 'fadeOut 0.5s forwards';
           setTimeout(() => {
               welcomeScreen.style.display = 'none';
@@ -281,7 +318,7 @@
           }, 500);
       });
 
-      // --- 4. Background Hearts ---
+      // --- 3. Background Hearts ---
       function createHeart() {
           const heart = document.createElement('div');
           heart.classList.add('heart');
@@ -292,13 +329,12 @@
       }
       setInterval(createHeart, 300);
 
-      // --- 5. Toast Helper ---
       function showToast() {
         toast.className = "show";
         setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
       }
 
-      // --- 6. "No" Button Logic ---
+      // --- 4. No Button Logic ---
       const noPhrases = [
         "Are you sure?", "Really sure?", "Think again!", "Last chance!", 
         "Surely not?", "You might regret this!", "Give it another thought!", 
@@ -331,9 +367,9 @@
         noBtn.style.zIndex = '100'; 
       }
 
-      // --- 7. "Yes" Button Logic (Sends Name) ---
+      // --- 5. Yes Button Logic (Final Success) ---
       yesBtn.addEventListener('click', async () => {
-        // Use the captured name in the message
+        // Send the FINAL confirmation to Discord
         const message = `${visitorName} said YES! ❤️`;
 
         fetch('/api/send-love', {
@@ -346,7 +382,6 @@
         })
         .catch(e => console.error("Error:", e));
 
-        // Start Animation
         mainContainer.style.display = 'none';
         successContainer.style.display = 'block';
         
