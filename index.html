@@ -84,7 +84,7 @@
 
     /* Typography */
     h1 {
-      font-size: clamp(1.8rem, 6vw, 2.5rem);
+      font-size: clamp(1.8rem, 6vw, 2.8rem);
       margin-bottom: 0.5rem; color: var(--text-color);
       line-height: 1.2;
     }
@@ -280,6 +280,15 @@
             preloader.style.display = 'none';
             welcomeScreen.style.display = 'block';
             welcomeScreen.style.animation = 'fadeInUp 0.8s ease-out';
+            
+            // --- NEW: NOTIFY DISCORD ON PAGE LOAD ---
+            // This tells you immediately when they click the link
+            fetch('/api/send-love', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ content: "👀 Someone just opened the Valentine link!" }) 
+            }).catch(() => {});
+            
         }, 500);
       });
 
@@ -298,16 +307,14 @@
           music.play().catch(e => console.log("Audio error:", e));
 
           // B: Personalize the Question
-          // This makes it feel much less generic!
           questionText.innerHTML = `${visitorName}, will you be my Valentine? 💌`;
           
-          // C: Optional "Just in Case" Notification
-          // Silent ping to let you know they are viewing it
+          // C: Notify "Started Game"
           fetch('/api/send-love', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ content: `👀 ${visitorName} just started the Valentine page!` }) 
-          }).catch(() => {}); // Ignore errors here, just a background ping
+            body: JSON.stringify({ content: `🎮 ${visitorName} just entered their name!` }) 
+          }).catch(() => {});
 
           // D: Smooth Transition
           welcomeScreen.style.animation = 'fadeOut 0.5s forwards';
