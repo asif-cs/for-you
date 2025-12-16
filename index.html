@@ -77,7 +77,12 @@
     }
     .btn:active { transform: scale(0.95); }
     
-    #yes-btn { background-color: var(--yes-btn-bg); }
+    #yes-btn { 
+        background-color: var(--yes-btn-bg); 
+        /* Ensure Yes button is always on top as it grows */
+        z-index: 20; 
+        transition: transform 0.3s ease;
+    }
     #no-btn { background-color: var(--no-btn-bg); position: relative; }
 
     /* Success Screen */
@@ -159,7 +164,15 @@
       const heartsContainer = document.querySelector('.hearts');
       const toast = document.getElementById('toast');
 
-      // --- Preloader ---
+      // --- 1. Preload Images & Assets ---
+      // This ensures stickers don't "pop in" later if internet is slow
+      const imagesToPreload = ["media/gifs/sticker2.gif", "media/gifs/sticker3.gif", "media/gifs/final.gif"];
+      imagesToPreload.forEach(src => {
+          const img = new Image();
+          img.src = src;
+      });
+
+      // --- 2. Remove Preloader when page is ready ---
       window.addEventListener('load', () => {
         preloader.style.opacity = '0';
         setTimeout(() => {
@@ -169,7 +182,7 @@
         }, 500);
       });
 
-      // --- Background Hearts ---
+      // --- 3. Background Hearts Animation ---
       function createHeart() {
           const heart = document.createElement('div');
           heart.classList.add('heart');
@@ -180,30 +193,34 @@
       }
       setInterval(createHeart, 300);
 
-      // --- Notification Logic (Toast) ---
+      // --- 4. Toast Helper ---
       function showToast() {
         toast.className = "show";
         setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
       }
 
-      // --- "No" Button Logic ---
-      const noPhrases = ["Are you sure?", "Think again!", "Please?", "Don't break my heart!", "Last chance!"];
+      // --- 5. "No" Button Logic ---
+      const noPhrases = [
+        "Are you sure?", "Really sure?", "Think again!", "Last chance!", 
+        "Surely not?", "You might regret this!", "Give it another thought!", 
+        "Are you absolutely certain?", "This could be a mistake!", 
+        "Have a heart!", "Don't be so cold!", "Change of heart?", 
+        "Wouldn't you reconsider?", "Is that your final answer?", 
+        "You're breaking my heart ;("
+      ];
       let phraseIndex = 0;
       
-      // NOTE: Removed 'mouseover' event so users can click the button to see the text change.
-      // The button will now only move AFTER being clicked.
-
       noBtn.addEventListener('click', () => {
-         // Cycle text first
+         // Update text
          noBtn.innerText = noPhrases[phraseIndex % noPhrases.length];
          phraseIndex++;
          
-         // Then move
+         // Move button
          moveNoButton();
          
-         // Make Yes button grow slightly
+         // Make Yes button grow aggressively
          const currentScale = parseFloat(yesBtn.style.transform.replace('scale(', '')) || 1;
-         yesBtn.style.transform = `scale(${currentScale + 0.1})`;
+         yesBtn.style.transform = `scale(${currentScale + 0.5})`;
       });
 
       function moveNoButton() {
@@ -224,39 +241,43 @@
         noBtn.style.zIndex = '100'; 
       }
 
-      // --- "Yes" Button Logic ---
+      // --- 6. "Yes" Button Logic (Synced & Secure) ---
       yesBtn.addEventListener('click', async () => {
-        // 1. Play Music
-        music.play().catch(e => console.log("Music play blocked:", e));
+        // A. Show Loader (Buffering State)
+        preloader.style.display = 'flex';
+        preloader.style.opacity = '1';
 
-        // 2. Secure Webhook Call
-        const webhookURL = "https://discord.com/api/webhooks/1401371282729078957/7sfMTj4-eibmequSYjqg96yuluH2WQTtJj6E68zl2Lku2CqxkygPukx4Dr-0SLoPT5rP"; 
-
-        if (webhookURL !== "YOUR_WEBHOOK_URL_HERE") {
-            try {
-                await fetch(webhookURL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        content: "She said YES! ❤️",
-                        username: "Valentine Bot"
-                    })
-                });
-                showToast(); 
-            } catch (err) {
-                console.error("Notification failed", err);
-            }
-        } else {
-            showToast(); 
+        // B. Attempt to Play Music & Wait for it
+        try {
+            await music.play();
+        } catch (err) {
+            console.warn("Music autoplay blocked or failed:", err);
+            // We continue anyway so the user isn't stuck
         }
 
-        // 3. Show Success Screen
+        // C. Send Secure Notification (Using Internal API)
+        // This now points to your own Vercel backend
+        fetch('/api/send-love', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        })
+        .then(res => {
+            if(res.ok) showToast();
+            else console.log("Webhook failed");
+        })
+        .catch(e => console.error("Error:", e));
+
+        // D. Hide Loader & Start Visuals (Synced!)
+        preloader.style.opacity = '0';
+        setTimeout(() => { preloader.style.display = 'none'; }, 200);
+
         mainContainer.style.display = 'none';
         successContainer.style.display = 'block';
         
         const intermediateSticker = document.getElementById('intermediate-sticker');
         const finalSticker = document.getElementById('final-sticker');
         
+        // Sequence using updated paths
         const sequence = ["media/gifs/sticker1.gif", "media/gifs/sticker2.gif", "media/gifs/sticker3.gif"];
         
         for (const src of sequence) {
